@@ -1,4 +1,3 @@
-# routes.py
 from flask import jsonify, request
 from models import Hero, Power, HeroPower  
 from database import db
@@ -20,7 +19,7 @@ def configure_routes(app):
                 'powers': [{'id': hp.power_id, 'strength': hp.strength} for hp in hero.hero_powers]
             }
             return jsonify(hero_data)
-        return jsonify({'error': 'Hero not found'}), 
+        return jsonify({'error': 'Hero not found'}), 404
 
     @app.route('/powers', methods=['GET'])
     def get_powers():
@@ -33,13 +32,13 @@ def configure_routes(app):
         if power:
             power_data = {'id': power.id, 'name': power.name, 'description': power.description}
             return jsonify(power_data)
-        return jsonify({'error': 'Power not found'}), 
+        return jsonify({'error': 'Power not found'}), 404
 
     @app.route('/powers/<int:id>', methods=['PATCH'])
     def update_power(id):
         power = Power.query.get(id)
         if not power:
-            return jsonify({'error': 'Power not found'}), 
+            return jsonify({'error': 'Power not found'}), 404
 
         data = request.json
         if 'description' in data:
@@ -56,6 +55,19 @@ def configure_routes(app):
         db.session.commit()
         return jsonify({'message': 'Hero power created successfully', 'hero_power': {'id': hero_power.id, 'hero_id': hero_power.hero_id, 'power_id': hero_power.power_id, 'strength': hero_power.strength}}), 201
 
+    # New methods added here
+    @app.route('/hero_powers', methods=['GET'])
+    def get_hero_powers():
+        hero_powers = HeroPower.query.all()
+        return jsonify([{'id': hp.id, 'hero_id': hp.hero_id, 'power_id': hp.power_id, 'strength': hp.strength} for hp in hero_powers])
+
+    @app.route('/hero_powers/<int:id>', methods=['GET'])
+    def get_hero_power(id):
+        hero_power = HeroPower.query.get(id)
+        if hero_power:
+            return jsonify({'id': hero_power.id, 'hero_id': hero_power.hero_id, 'power_id': hero_power.power_id, 'strength': hero_power.strength})
+        return jsonify({'error': 'Hero power not found'}), 404
+
     # DELETE routes
     @app.route('/heroes/<int:id>', methods=['DELETE'])
     def delete_hero(id):
@@ -64,7 +76,7 @@ def configure_routes(app):
             db.session.delete(hero)
             db.session.commit()
             return jsonify(message=f"Hero with id {id} deleted."), 
-        return jsonify(error="Hero not found."), 
+        return jsonify(error="Hero not found."), 404
 
     @app.route('/powers/<int:id>', methods=['DELETE'])
     def delete_power(id):
@@ -73,7 +85,7 @@ def configure_routes(app):
             db.session.delete(power)
             db.session.commit()
             return jsonify(message=f"Power with id {id} deleted."), 
-        return jsonify(error="Power not found."), 
+        return jsonify(error="Power not found."), 404
 
     @app.route('/hero_powers/<int:id>', methods=['DELETE'])
     def delete_hero_power(id):
@@ -82,4 +94,4 @@ def configure_routes(app):
             db.session.delete(hero_power)
             db.session.commit()
             return jsonify(message=f"Hero power with id {id} deleted."), 
-        return jsonify(error="Hero power not found."),
+        return jsonify(error="Hero power not found."), 404
